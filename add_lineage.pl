@@ -3,7 +3,7 @@ use strict;
 use Env qw(HOME);
 use Bio::DB::Taxonomy;
 use Getopt::Long;
-my @tax_levels = qw(suphylum class order family genus);
+my @tax_levels = qw(kingdom phylum class order family genus);
 my %wanted_rank = map { $_ => 1 } @tax_levels;
 my $nodesfile = "$HOME/lib/taxonomy/nodes.dmp";
 my $namefile = "$HOME/lib/taxonomy/names.dmp";
@@ -37,17 +37,17 @@ while (<$fh>) {
     next;
   }
   my $taxon = $taxdb->get_taxon(-taxonid => $taxid);
-  my @taxonomy;
+  my %taxonomy;
   if ( $taxon )  {
     while ( my $ancestor = $taxon->ancestor ) {
       my $rank = $taxon->rank;
       if ( $wanted_rank{$rank} ) {
-	push @taxonomy, join(" ", @{$taxon->name('scientific')});
+	$taxonomy{$rank} = join(" ", @{$taxon->name('scientific')});
       }
       $taxon = $ancestor;
     }
   } else {
       warn("cannot find taxon for $taxid ($name)\n");
   }
-  print join(",",@taxonomy,$name,$taxid,@rest),"\n";
+  print join(",",(map { $taxonomy{$_} || '' } @tax_levels),$name,$taxid,@rest),"\n";
 }
